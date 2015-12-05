@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Using GitLab CI slides</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/night.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section data-transition="zoom" data-background="rgb(85,68,136)">
+					<h1 style="color: rgba(255, 255, 255, 0.62)">Using GitLab CI</h1>
+				</section>
+
+				<section>
+					<q cite="http://www.martinfowler.com/articles/continuousIntegration.html">
+						&ldquo;
+						Continuous Integration is a software development practice where members of a team integrate their work frequently, usually each person integrates at least daily - leading to multiple integrations per day.
+						&rdquo;
+					</q>
+					<p style="text-align: right;">- Martin Fowler</p>
+				</section>
+
+				<section>
+					<h2>Why GitLab CI?</h2>
+					<dl>
+						<div class="fragment">
+							<dt>Integration</dt><dd><b>Fully</b> integrated with GitLab</dd>
+						</div>
+						<div class="fragment">
+							<dt>Easy to start</dt><dd>A few lines in <em>yml</em> (YAML) inside of <em>.gitlab-ci.yml</em> and a bit clicks</dd>
+						</div>
+						<div class="fragment">
+							<dt>Scalable</dt><dd>Concurrent jobs (in parallel), many runners, tagged runners</dd>
+						</div>
+						<div class="fragment">
+							<dt>Isolated test environment</dt><dd>Using Docker containers</dd>
+						</div>
+					</dl>
+				</section>
+
+				<section>
+					<h2>GitLab CI configuration</h2>
+					<p>Is done via <em>.gitlab-ci.yml</em> file:</p>
+					<p>Example for NodeJS project:</p>
+					<pre><code class="hljs">
+nodejs_run:
+  stage: test
+  script:
+    - npm install
+    - npm test
+					</code></pre>
+				</section>
+
+				<section>
+					<section>
+						<h2>How GitLab CI differs from other CI's?</h2>
+					</section>
+					<section>
+						<h3>Runners</h3>
+						<p>This is an application that processes builds. It receives commands from GitLab CI.</p>
+						<p class="fragment">It's possible to <em>tag</em> runners so jobs run on runners which can process them (e.g. different OS)</p>
+					</section>
+					<section>
+						<h3>Executors</h3>
+						<dl>
+							<div class="fragment">
+								<dt>Shell</dt><dd>Localy</dd>
+							</div>
+							<div class="fragment">
+								<dt>Docker</dt><dd>Inside of Docker container</dd>
+							</div>
+							<div class="fragment">
+								<dt>Docker-SSH</dt><dd>In Docker container communicating over SSH</dd>
+							</div>
+							<div class="fragment">
+								<dt>SSH</dt><dd>On remote server using SSH</dd>
+							</div>
+						</dl>
+					</section>
+					<section>
+						<h3>Stages</h3>
+						<p>Used to group your jobs in stages to create multiple pipelines</p>
+						<p class="fragment">Builds of next stage are run after success</p>
+					</section>
+					<section>
+						<h3>Repo cleaning</h3>
+						<p>By default, GitLab CI cleans build dir between builds for the sake of concurrency</p>
+						<p class="fragment">But we can preserve builds between builds (Hello, <em>npm</em> and <em>node_modules</em> !)</p>
+					</section>
+					<section>
+						<h3>Job concurrency</h3>
+						<p><b>Jobs</b> of the same <b>stage</b> run in parallel</p>
+					</section>
+				</section>
+
+				<section>
+					<section><h2>Start using GitLab CI</h2></section>
+					<section>
+						<h2>Get runner first</h2>
+						<p>A simple Ubuntu Server VDS can play this role.</p>
+						<div class="fragment">Provision it via script:
+							<pre><code class="hljs">
+# Gitlab CI multi runner
+curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-ci-multi-runner/script.deb.sh | bash
+apt-get install -y gitlab-ci-multi-runner
+
+echo 'run "gitlab-ci-multi-runner register"'
+							</code></pre></div>
+						<p class="fragment">
+							Run <code>gitlab-ci-multi-runner register</code> and answer questions.
+							<em>You can find your unique registration token under <b>Settings ---> Runners</b> section.</em>
+						</p>
+					</section>
+					<section>
+						<h2>Add .gitlab-ci.yml to your repo</h2>
+						<p>Example for nodejs:</p>
+						<pre><code class="hljs">
+nodejs_run:
+	stage: test
+	script:
+	- npm install
+	- npm test
+						</code></pre>
+					</section>
+					<section>
+						<h2>Did you expect something?</h2>
+						<p>This is all!</p>
+					</section>
+				</section>
+
+				<section>
+					<section><h2>Pro tips for usage</h2></section>
+					<section>
+						<h2>Use <em>cache</em> option in your <em>.gitlab-ci.yml</em> to preserve dirs or files</h2>
+						<p>This line will cache all git untracked files and files in <em>node_modules</em> dir</p>
+						<pre><code class="hljs">
+cache:
+	untracked: true
+	paths:
+	- node_modules/
+						</code></pre>
+					</section>
+					<section>
+						<h2>Build skip</h2>
+						<p>Build will be skipped if your commit message contains <code>[ci skip]</code></p>
+					</section>
+					<section>
+						<h2>Validate your <em>.gitlab-ci.yml</em></h2>
+						<p>Using lint: <a href="https://gitlab.com/ci/lint" target="_blank">gitlab.com/ci/lint</a></p>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Advanced usage for JS projects</h2>
+						<small>aka <em>"extension"</em></small>
+					</section>
+					<section>
+						<h2>How to save build stats for a long time?</h2>
+						<p class="fragment">Bash scripts will save us!</p>
+					</section>
+					<section>
+						<h2>Private static web server<br>(e.g. <em>nginx</em>)</h2>
+						<p>Use it to store your coverage, static analysis, test cases info for a long time</p>
+					</section>
+					<section>
+						<h2>How to get your info</h2>
+						<p class="fragment">
+							Collect your test coverage with <em>istanbul</em> (GH: <a href="https://gotwarlost.github.io/istanbul/">gotwarlost/istanbul</a>)<br>
+							(or <em>isparta</em>, GH: <a href="https://github.com/douglasduteil/isparta">douglasduteil/isparta</a>)
+						</p>
+						<p class="fragment">Get your <em>mocha</em> test stats in HTML with <a href="http://adamgruber.github.io/mochawesome/">mochawesome</a> reporter (GH: <a href="https://github.com/adamgruber/mochawesome">adamgruber/mochawesome</a>)</p>
+						<p class="fragment">Catch your static analysis with plato (GH: <a href="https://github.com/es-analysis/plato">es-analysis/plato</a>)</p>
+					</section>
+					<section>
+						<h2>But how to export this info to my static web server?</h2>
+						<p>Use <a target="_blank" href="https://github.com/Lingvokot/gitlab-ci-scripts/blob/master/build-export.sh">somekind bash</a> script</p>
+						<p>
+							Use it like that (line in your <em>.gitlab-ci.yml</em>). <code>npm test</code> should generate istanbul, mocha and plato reports.
+							<pre><code class="hljs">
+my_gitlab_ci_job:
+  script:
+    - npm test
+		...
+    - /my/path/to/build-export.sh $CI_BUILD_ID $CI_PROJECT_DIR my-project-name
+							</code></pre>
+						</p>
+						<small>Why not use GitLab CI Web hooks? Because we need access to repository files</small>
+					</section>
+					<section>
+						<h2>What about badges?</h2>
+						<p>Use <a href="http://shields.io/">shields.io</a> to generate SVG image (via bash script), then ...</p>
+						<div class="fragment">
+							<p>... use bash script to save it into public web space</p>
+							<p>
+								You can use private nginx server, but exclude is from auth for sure:
+								<pre><code class="hljs">
+location ~* ((badge_maintainability\.svg)|(badge_tests\.svg)|(badge_coverage\.svg))$ {
+	auth_basic off;
+}
+								</code></pre>
+							</p>
+						</div>
+						<div class="fragment">
+							<p>
+								Add badge to your README.md. Example for mochawesome:
+							</p>
+							<pre><code class="hljs">
+[![test status](http://path/to/latest/badge_tests.svg)](http://path/to/latest/mochawesome-reports/mochawesome.html)
+							</code></pre>
+						</div>
+					</section>
+				</section>
+
+				<section style="text-align: left;">
+					<h1>THE END</h1>
+					<p>Useful links:</p>
+					<p>
+						- <a href="http://doc.gitlab.com/ce/ci/yaml/README.html">Docs for .gitlab-ci.yml</a> <br>
+						- <a href="https://gitlab.com/gitlab-org/gitlab-ci-multi-runner/blob/master/README.md">GitLab Runner repository README.md</a> <br>
+						- <a href="https://gitlab.com/gitlab-org/gitlab-ci-multi-runner/blob/master/docs/install/linux-repository.md">Installation on linux</a> <br>
+						- <a href="https://github.com/Lingvokot/gitlab-ci-scripts">Our custom bash scripts</a> <br>
+					</p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
